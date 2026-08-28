@@ -19,6 +19,15 @@ export class VehiculoController {
     }
   }
 
+  static async getVehiculoByPlaca(req, res) {
+  try {
+    const vehiculo = await VehiculoService.obtenerPorPlaca(req.params.placa);
+    res.json(vehiculo);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+}
+
   static async createVehiculo(req, res) {
     try {
       const nuevoVehiculo = await VehiculoService.registrar(req.body);

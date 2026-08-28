@@ -16,6 +16,14 @@ export class VehiculoService {
     return vehiculo;
   }
 
+  static async obtenerPorPlaca(placa) {
+  const vehiculo = await VehiculoModel.obtenerPorPlaca(placa);
+  if (!vehiculo) {
+    throw new Error(`No se encontró ningún vehículo con la placa ${placa}`);
+  }
+  return vehiculo;
+}
+
   static async registrar(datos) {
     // Validaciones de campos obligatorios según el DDL
     if (!datos.id_clasificacion || !datos.placa || !datos.marca || !datos.anio || !datos.numero_chasis) {
