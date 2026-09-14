@@ -1,17 +1,16 @@
-import mariadb from 'mariadb';
-import dotenv from 'dotenv';
+import { Sequelize } from 'sequelize';
 
-dotenv.config();
+// Creación de la instancia de Sequelize
+const sequelize = new Sequelize(
+  process.env.DB_NAME || 'fleettransport',
+  process.env.DB_USER || 'root',
+  process.env.DB_PASSWORD || '1234',
+  {
+    host: process.env.DB_HOST || 'localhost',
+    dialect: 'mariadb', // o 'mysql'
+    logging: false
+  }
+);
 
-const pool = mariadb.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT) || 3306,
-  connectionLimit: 5
-});
-
-export default {
-  getConnection: () => pool.getConnection()
-};
+// Exportación por defecto de la INSTANCIA
+export default sequelize;

@@ -1,150 +1,84 @@
-import pool from '../../config/db.js';
+import { DataTypes } from 'sequelize';
+import sequelize from '../../config/db.js';
 
-export class VehiculoModel {
-  static async obtenerTodos() {
-    let conn;
-    try {
-      conn = await pool.getConnection();
-      const query = `
-        SELECT 
-          v.*, 
-          c.nombre_clasificacion
-        FROM vehiculos v
-        LEFT JOIN clasificaciones_vehiculos c ON v.id_clasificacion = c.id_clasificacion
-      `;
-      return await conn.query(query);
-    } finally {
-      if (conn) conn.release();
+const Vehiculo = sequelize.define('Vehiculo', {
+  id_vehiculo: {
+    type: DataTypes.INTEGER(11),
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  id_clasificacion: {
+    type: DataTypes.INTEGER(11),
+    allowNull: false,
+    comment: 'Llave foránea a clasificaciones_vehiculos',
+    references: {
+      model: 'clasificaciones_vehiculos',
+      key: 'id_clasificacion'
+    }
+  },
+  placa: {
+    type: DataTypes.STRING(15),
+    allowNull: false,
+    unique: true
+  },
+  marca: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  modelo: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: null
+  },
+  anio: {
+    type: DataTypes.INTEGER(4),
+    allowNull: false
+  },
+  numero_chasis: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
+  },
+  numero_motor: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: null,
+    unique: true,
+    comment: 'Será NULL para los remolques'
+  },
+  capacidad_carga: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: null,
+    comment: '(Segun Paletas) Útil para remolques o camiones rígidos'
+  },
+  capacidad_arrastre: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: null,
+    comment: '(Segun Peso) Útil para tractocamiones'
+  },
+  estado: {
+    type: DataTypes.ENUM('Activo', 'En Ruta', 'Mantenimiento', 'Inactivo'),
+    allowNull: true,
+    defaultValue: 'Activo'
+  },
+  id_acoplado_actual: {
+    type: DataTypes.INTEGER(11),
+    allowNull: true,
+    defaultValue: null,
+    comment: 'ID del remolque enganchado actualmente',
+    references: {
+      model: 'vehiculos',
+      key: 'id_vehiculo'
     }
   }
+}, {
+  tableName: 'vehiculos',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
 
-  static async obtenerPorId(id) {
-    let conn;
-    try {
-      conn = await pool.getConnection();
-      const query = `
-        SELECT 
-          v.*, 
-          c.nombre_clasificacion
-        FROM vehiculos v
-        LEFT JOIN clasificaciones_vehiculos c ON v.id_clasificacion = c.id_clasificacion
-        WHERE v.id_vehiculo = ?
-      `;
-      const rows = await conn.query(query, [id]);
-      return rows[0] || null;
-    } finally {
-      if (conn) conn.release();
-    }
-  }
-
-
-  static async obtenerPorPlaca(placa) {
-    let conn;
-    try {
-      conn = await pool.getConnection();
-      const query = `
-      SELECT 
-        v.*, 
-        c.nombre_clasificacion
-      FROM vehiculos v
-      LEFT JOIN clasificaciones_vehiculos c ON v.id_clasificacion = c.id_clasificacion
-      WHERE v.placa = ?
-    `;
-      const rows = await conn.query(query, [placa]);
-      return rows[0] || null;
-    } finally {
-      if (conn) conn.release();
-    }
-  }
-
-  static async crear(datos) {
-    let conn;
-    const {
-      id_clasificacion,
-      placa,
-      marca,
-      modelo = null,
-      anio,
-      numero_chasis,
-      numero_motor = null,
-      capacidad_carga = null,
-      capacidad_arrastre = null,
-      estado = 'Activo',
-      id_acoplado_actual = null
-    } = datos;
-
-    try {
-      conn = await pool.getConnection();
-      const query = `
-        INSERT INTO vehiculos (
-          id_clasificacion, placa, marca, modelo, anio, 
-          numero_chasis, numero_motor, capacidad_carga, 
-          capacidad_arrastre, estado, id_acoplado_actual
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      const result = await conn.query(query, [
-        id_clasificacion, placa, marca, modelo, anio,
-        numero_chasis, numero_motor, capacidad_carga,
-        capacidad_arrastre, estado, id_acoplado_actual
-      ]);
-      return Number(result.insertId);
-    } finally {
-      if (conn) conn.release();
-    }
-  }
-
-  static async actualizar(id, datos) {
-    let conn;
-    const {
-      id_clasificacion,
-      placa,
-      marca,
-      modelo,
-      anio,
-      numero_chasis,
-      numero_motor,
-      capacidad_carga,
-      capacidad_arrastre,
-      estado,
-      id_acoplado_actual
-    } = datos;
-
-    try {
-      conn = await pool.getConnection();
-      const query = `
-        UPDATE vehiculos SET 
-          id_clasificacion = ?,
-          placa = ?,
-          marca = ?,
-          modelo = ?,
-          anio = ?,
-          numero_chasis = ?,
-          numero_motor = ?,
-          capacidad_carga = ?,
-          capacidad_arrastre = ?,
-          estado = ?,
-          id_acoplado_actual = ?
-        WHERE id_vehiculo = ?
-      `;
-      const result = await conn.query(query, [
-        id_clasificacion, placa, marca, modelo, anio,
-        numero_chasis, numero_motor, capacidad_carga,
-        capacidad_arrastre, estado, id_acoplado_actual, id
-      ]);
-      return result.affectedRows > 0;
-    } finally {
-      if (conn) conn.release();
-    }
-  }
-
-  static async eliminar(id) {
-    let conn;
-    try {
-      conn = await pool.getConnection();
-      const result = await conn.query('DELETE FROM vehiculos WHERE id_vehiculo = ?', [id]);
-      return result.affectedRows > 0;
-    } finally {
-      if (conn) conn.release();
-    }
-  }
-}
+export default Vehiculo;

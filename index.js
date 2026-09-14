@@ -2,8 +2,9 @@ import express from 'express';
 import 'dotenv/config';
 
 // Importación de rutas (Recuerda incluir siempre la extensión .js)
+import conductorRoutes from './src/routes/conductorRoutes.js';
 import vehiculoRoutes from './src/routes/vehiculoRoutes.js';
-// import conductorRoutes from './src/routes/conductorRoutes.js';
+
 
 const app = express();
 
@@ -21,7 +22,7 @@ app.get('/', (req, res) => {
 
 // 3. Registro de las rutas de los módulos
 app.use('/api/vehiculos', vehiculoRoutes);
-// app.use('/api/conductores', conductorRoutes);
+app.use('/api/conductores', conductorRoutes);
 
 // 4. Captura de rutas inexistentes (404)
 app.use((req, res) => {
